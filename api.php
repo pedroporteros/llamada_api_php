@@ -121,28 +121,22 @@ if (!$jsonResponse) {
     exit;
 }
 
-// Extraer el contenido generado (puede variar ligeramente según el modelo/respuesta)
-// Normalmente está en $jsonResponse['candidates'][0]['content']['parts'][0]['text']
+// Extraer el contenido generado
 if (isset($jsonResponse['candidates'][0]['content']['parts'][0]['text'])) {
     $generatedContent = $jsonResponse['candidates'][0]['content']['parts'][0]['text'];
 
-    // --- NUEVO: Limpiar delimitadores Markdown ---
-    // Elimina ```json o ``` del principio y ``` del final, junto con espacios en blanco alrededor
     $cleanedContent = preg_replace('/^```(?:json)?\s*|\s*```$/', '', trim($generatedContent));
-    // --- FIN NUEVO ---
 
     // Intenta decodificar el contenido *limpio* si esperas un JSON
     $finalJsonOutput = json_decode($cleanedContent, true); // Usa $cleanedContent aquí
 
     if ($finalJsonOutput === null && json_last_error() !== JSON_ERROR_NONE) {
-        // El texto generado por la IA no era un JSON válido como se solicitó, incluso después de limpiar
         error_log("El contenido generado por la IA no es JSON válido (después de limpiar): " . $cleanedContent);
-        // Podrías incluir el contenido original también para depurar
         error_log("Contenido original de la IA: " . $generatedContent);
         echo json_encode(['error' => 'El contenido generado por la IA no es JSON válido.', 'raw_content' => $generatedContent]);
     } else {
         // Devolver el JSON generado por la IA ya decodificado
-        header('Content-Type: application/json'); // Asegúrate que la cabecera está antes de cualquier echo
+        header('Content-Type: application/json');
         echo json_encode($finalJsonOutput);
     }
 } elseif (isset($jsonResponse['error'])) {
